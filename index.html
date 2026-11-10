@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090d14">
+<title>LINE TRADER AI</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{color-scheme:dark;--bg:#090d14;--panel:#121c29;--line:#29384a;--txt:#edf3fb;--muted:#8290a3;--green:#20d69a;--red:#ff647c}
+*{box-sizing:border-box}body{margin:0 auto;max-width:760px;padding:calc(16px + env(safe-area-inset-top)) 15px calc(24px + env(safe-area-inset-bottom));background:radial-gradient(ellipse at 50% -15%,#172b40,var(--bg) 50%);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button{font:inherit;cursor:pointer}.top,.balance-row,.head,.holding,.trade{display:flex;justify-content:space-between;align-items:center;gap:12px}.top{margin:4px 0 20px}.brand{display:flex;align-items:center;gap:10px}.logo{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,#20d69a,#1686a4);color:#06131a;font-weight:900;font-size:20px}.brand strong{display:block;font-size:14px;letter-spacing:1px}.brand small{font-size:10px;color:var(--muted);letter-spacing:1.5px}.status{font-size:10px;color:var(--green);border:1px solid #1b6d58;background:#10251f;padding:7px 10px;border-radius:20px}.status:before{content:"";display:inline-block;width:6px;height:6px;background:var(--green);border-radius:50%;margin-right:6px}
+.hero,.card{background:linear-gradient(145deg,#152333,#111925);border:1px solid var(--line);border-radius:17px;padding:15px;margin-bottom:12px}.hero{border-color:#294052}.eyebrow{font-size:10px;letter-spacing:1.4px;color:var(--muted);margin:0 0 8px;text-transform:uppercase}.balance{font-size:32px;font-weight:760;letter-spacing:-1px}.currency{font-size:12px;color:var(--muted);font-weight:500}.change{font-size:11px;color:var(--green);background:#12352d;padding:7px 9px;border-radius:8px}.hero-foot{display:flex;gap:20px;border-top:1px solid #2b3a49;padding-top:12px;margin-top:14px}.metric small{display:block;color:var(--muted);font-size:10px;margin-bottom:4px}.metric b{font-size:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.wide{grid-column:1/-1}.head{margin-bottom:12px}.head h2,.section h2{font-size:13px;margin:0}.tag{font-size:9px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:4px 6px}.coin{display:flex;align-items:center;gap:9px}.coin-icon{width:31px;height:31px;border-radius:50%;background:#293342;color:#f5c76a;display:grid;place-items:center;font-weight:800}.coin-name{font-size:12px;font-weight:650}.coin-pair{font-size:10px;color:var(--muted);margin-top:3px}.price{text-align:right;font-size:13px;font-weight:700}.market{display:grid;gap:14px}.positive{color:var(--green)}.negative{color:var(--red)}
+.chart{height:110px}.chart canvas{width:100%;height:100%}.labels{display:flex;justify-content:space-between;color:var(--muted);font-size:9px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.action{border:0;border-radius:10px;padding:12px 5px;font-size:12px;font-weight:750}.buy{background:var(--green);color:#061a14}.sell{background:#38202b;color:#ff8295;border:1px solid #673344}.holding,.trade{padding:10px 0;border-top:1px solid #202c3b}.holding:first-child,.trade:first-child{border-top:0}.holding b,.trade b{font-size:11px}.holding small,.trade small{display:block;color:var(--muted);font-size:9px;margin-top:3px}.section{display:flex;justify-content:space-between;align-items:center;margin:18px 2px 9px}.section span{font-size:10px;color:var(--muted)}.empty{font-size:11px;color:var(--muted)}.notice{margin-top:12px;border:1px solid #5b4b2b;background:#211d14;color:#d9c18d;padding:11px;border-radius:11px;font-size:10px;line-height:1.5}.bottom{text-align:center;color:#637185;font-size:9px;letter-spacing:1px;margin:18px 0}
+.modal-back{position:fixed;inset:0;background:#000a;display:none;align-items:flex-end;justify-content:center;padding:12px;z-index:5}.modal{width:100%;max-width:520px;background:#121c29;border:1px solid #344457;border-radius:18px;padding:18px}.modal h3{margin:0 0 5px;font-size:17px}.modal p{font-size:11px;color:var(--muted);margin:0 0 14px}.modal input,.modal select{width:100%;padding:13px;background:#0b121c;border:1px solid #344457;border-radius:10px;color:var(--txt);font-size:15px;margin-bottom:10px}.modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.modal-actions button{padding:12px;border:0;border-radius:10px}.cancel{background:#263243;color:var(--txt)}.confirm{background:var(--green);color:#061a14;font-weight:750}
+@media(min-width:600px){body{padding-top:28px}.card{padding:17px}.balance{font-size:38px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="brand"><div class="logo">L</div><div><strong>LINE TRADER AI</strong><small>TRADING TERMINAL</small></div></div><div class="status">PAPER MODE</div></header>
+<section class="hero">
+<p class="eyebrow">Общий баланс · демо-счёт</p>
+<div class="balance-row"><div><div class="balance" id="balance">1,000.00 <span class="currency">USDT</span></div><div class="eyebrow" style="margin:3px 0 0">Виртуальные средства</div></div><div class="change" id="pnl">+0.00 USDT</div></div>
+<div class="hero-foot"><div class="metric"><small>Свободно</small><b id="free">1,000.00 USDT</b></div><div class="metric"><small>В активах</small><b id="invested">0.00 USDT</b></div><div class="metric"><small>Сделок</small><b id="count">0</b></div></div>
+</section>
+<div class="grid">
+<section class="card wide"><div class="head"><h2>Рынок</h2><span class="tag">ДЕМО-КОТИРОВКИ</span></div><div class="market">
+<div class="balance-row"><div class="coin"><div class="coin-icon">₿</div><div><div class="coin-name">Bitcoin</div><div class="coin-pair">BTC / USDT</div></div></div><div class="price" id="btc">$67,420.00</div></div>
+<div class="balance-row"><div class="coin"><div class="coin-icon" style="color:#a78bfa">◆</div><div><div class="coin-name">Ethereum</div><div class="coin-pair">ETH / USDT</div></div></div><div class="price" id="eth">$3,520.00</div></div>
+</div></section>
+<section class="card wide"><div class="head"><h2>Динамика портфеля</h2><span class="tag">ГРАФИК-ЗАГЛУШКА</span></div><div class="chart"><canvas id="chart"></canvas></div><div class="labels"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>Сейчас</span></div></section>
+<section class="card"><div class="head"><h2>Позиции</h2><span class="tag" id="posCount">0</span></div><div id="holdings" class="empty">Пока нет открытых позиций</div></section>
+<section class="card"><div class="head"><h2>Быстрая сделка</h2><span class="tag">SIM</span></div><div class="empty" style="margin-bottom:12px">Только виртуальные ордера</div><div class="actions"><button class="action buy" onclick="openTrade('buy')">Купить</button><button class="action sell" onclick="openTrade('sell')">Продать</button></div></section>
+</div>
+<div class="section"><h2>Последние сделки</h2><span>История демо-счёта</span></div><section class="card" id="history"><div class="empty">Сделок пока нет</div></section>
+<div class="notice">⚠️ Это тестовый интерфейс. Баланс и сделки хранятся только в этом браузере. Котировки и синхронизация с сервером будут подключены отдельно. Автоматическая AI-торговля пока не включена. Реальные деньги не используются.</div>
+<div class="bottom">LINE TRADER AI · PAPER TRADING TERMINAL</div>
+<div class="modal-back" id="modal"><div class="modal"><h3 id="modalTitle">Новая сделка</h3><p>Демо-ордер. Реальные средства не используются.</p><select id="asset"><option value="BTC">Bitcoin · BTC/USDT</option><option value="ETH">Ethereum · ETH/USDT</option></select><input id="amount" type="number" min="0" step="any" placeholder="Сумма в USDT"><div class="modal-actions"><button class="cancel" onclick="closeTrade()">Отмена</button><button class="confirm" id="confirm" onclick="executeTrade()">Подтвердить</button></div></div></div>
+<script>
+const tg=window.Telegram&&window.Telegram.WebApp;if(tg){tg.ready();tg.expand()}
+const prices={BTC:67420,ETH:3520};let mode='buy';let state;
+try{state=JSON.parse(localStorage.getItem('lineTraderDemo'))||{cash:1000,positions:{},trades:[]}}catch(e){state={cash:1000,positions:{},trades:[]}}
+const fmt=n=>Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+function save(){localStorage.setItem('lineTraderDemo',JSON.stringify(state))}
+function render(){
+let invested=Object.entries(state.positions).reduce((s,[a,p])=>s+p.qty*prices[a],0),equity=state.cash+invested;
+document.getElementById('balance').innerHTML=fmt(equity)+' <span class="currency">USDT</span>';
+document.getElementById('free').textContent=fmt(state.cash)+' USDT';document.getElementById('invested').textContent=fmt(invested)+' USDT';document.getElementById('count').textContent=state.trades.length;document.getElementById('pnl').textContent=(equity>=1000?'+':'')+fmt(equity-1000)+' USDT';
+let open=Object.entries(state.positions).filter(([a,p])=>p.qty>0);document.getElementById('posCount').textContent=open.length;
+document.getElementById('holdings').innerHTML=open.length?open.map(([a,p])=>`<div class="holding"><div class="coin"><div class="coin-icon">${a==='BTC'?'₿':'◆'}</div><div><b>${a}</b><small>${p.qty.toFixed(6)} шт.</small></div></div><div style="text-align:right"><b>${fmt(p.qty*prices[a])} USDT</b><small>ср. ${fmt(p.avg)}</small></div></div>`).join(''):'<div class="empty">Пока нет открытых позиций</div>';
+document.getElementById('history').innerHTML=state.trades.length?state.trades.slice(0,8).map(t=>`<div class="trade"><div><b class="${t.side==='BUY'?'positive':'negative'}">${t.side==='BUY'?'ПОКУПКА':'ПРОДАЖА'} · ${t.asset}</b><small>${t.date} · ${t.qty.toFixed(6)} ${t.asset}</small></div><b>${fmt(t.total)} USDT</b></div>`).join(''):'<div class="empty">Сделок пока нет</div>';
+drawChart()
+}
+function openTrade(side){mode=side;document.getElementById('modalTitle').textContent=side==='buy'?'Покупка актива':'Продажа актива';document.getElementById('confirm').textContent=side==='buy'?'Купить':'Продать';document.getElementById('amount').value='';document.getElementById('modal').style.display='flex'}
+function closeTrade(){document.getElementById('modal').style.display='none'}
+function executeTrade(){
+let asset=document.getElementById('asset').value,amount=Number(document.getElementById('amount').value);if(!Number.isFinite(amount)||amount<=0){alert('Укажи сумму больше нуля.');return}
+let qty=amount/prices[asset],fee=amount*.001;state.positions[asset] ||= {qty:0,avg:0};let p=state.positions[asset];
+if(mode==='buy'){if(amount+fee>state.cash){alert('Недостаточно виртуальных USDT.');return}p.avg=(p.avg*p.qty+amount)/(p.qty+qty);p.qty+=qty;state.cash-=amount+fee}
+else{if(qty>p.qty+1e-10){alert('Нельзя продать больше, чем есть в портфеле.');return}p.qty-=qty;state.cash+=amount-fee;if(p.qty<1e-10)p.qty=0}
+state.trades.unshift({side:mode.toUpperCase(),asset,qty,total:amount,date:new Date().toLocaleString('ru-RU')});save();render();closeTrade()
+}
+function drawChart(){
+let c=document.getElementById('chart'),r=c.getBoundingClientRect(),d=window.devicePixelRatio||1;c.width=r.width*d;c.height=r.height*d;let x=c.getContext('2d');x.scale(d,d);let w=r.width,h=r.height,pts=[],v=.45;
+for(let i=0;i<48;i++){v+=(Math.sin(i*.62)+Math.cos(i*.21))*.012+(Math.random()-.48)*.025;v=Math.max(.18,Math.min(.82,v));pts.push(v)}
+x.beginPath();pts.forEach((p,i)=>{let a=i/(pts.length-1)*w,b=h-p*.78*h-8;i?x.lineTo(a,b):x.moveTo(a,b)});let g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'#20d69a55');g.addColorStop(1,'#20d69a00');x.lineTo(w,h);x.lineTo(0,h);x.closePath();x.fillStyle=g;x.fill();x.beginPath();pts.forEach((p,i)=>{let a=i/(pts.length-1)*w,b=h-p*.78*h-8;i?x.lineTo(a,b):x.moveTo(a,b)});x.strokeStyle='#20d69a';x.lineWidth=2;x.stroke()
+}
+render();window.addEventListener('resize',drawChart);
+</script>
+</body></html>
