@@ -19,7 +19,7 @@ button{font:inherit;cursor:pointer}.top,.balance-row,.head,.holding,.trade{displ
 </style>
 </head>
 <body>
-<header class="top"><div class="brand"><div class="logo">L</div><div><strong>LINE TRADER AI</strong><small>TRADING TERMINAL</small></div></div><div class="status">PAPER MODE</div></header>
+<header class="top"><div class="brand"><div class="logo">L</div><div><strong>LINE TRADER AI</strong><small>TRADING TERMINAL</small></div></div><div class="status" id="connectionStatus">ПОДКЛЮЧЕНИЕ...</div></header>
 <section class="hero">
 <p class="eyebrow">Общий баланс · демо-счёт</p>
 <div class="balance-row"><div><div class="balance" id="balance">1,000.00 <span class="currency">USDT</span></div><div class="eyebrow" style="margin:3px 0 0">Виртуальные средства</div></div><div class="change" id="pnl">+0.00 USDT</div></div>
@@ -27,8 +27,8 @@ button{font:inherit;cursor:pointer}.top,.balance-row,.head,.holding,.trade{displ
 </section>
 <div class="grid">
 <section class="card wide"><div class="head"><h2>Рынок</h2><span class="tag">КОТИРОВКИ OKX</span></div><div class="market">
-<div class="balance-row"><div class="coin"><div class="coin-icon">₿</div><div><div class="coin-name">Bitcoin</div><div class="coin-pair">BTC / USDT</div></div></div><div class="price" id="btc">$67,420.00</div></div>
-<div class="balance-row"><div class="coin"><div class="coin-icon" style="color:#a78bfa">◆</div><div><div class="coin-name">Ethereum</div><div class="coin-pair">ETH / USDT</div></div></div><div class="price" id="eth">$3,520.00</div></div>
+<div class="balance-row"><div class="coin"><div class="coin-icon">₿</div><div><div class="coin-name">Bitcoin</div><div class="coin-pair">BTC / USDT</div></div></div><div class="price" id="btc">Загрузка...</div></div>
+<div class="balance-row"><div class="coin"><div class="coin-icon" style="color:#a78bfa">◆</div><div><div class="coin-name">Ethereum</div><div class="coin-pair">ETH / USDT</div></div></div><div class="price" id="eth">Загрузка...</div></div>
 </div></section>
 <section class="card wide"><div class="head"><h2>Результат закрытых сделок</h2><span class="tag">РЕЗУЛЬТАТ СДЕЛОК</span></div><div class="chart"><canvas id="chart"></canvas></div><div class="labels"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>Сейчас</span></div></section>
 <section class="card"><div class="head"><h2>Позиции</h2><span class="tag" id="posCount">0</span></div><div id="holdings" class="empty">Пока нет открытых позиций</div></section>
@@ -108,10 +108,19 @@ async function executeTrade(){
   finally{busy=false;button.disabled=false;button.textContent=mode==='buy'?'Купить':'Продать'}
 }
 async function refresh(){
-  try{state=await api('/api/state');render()}
-  catch(error){
+  const status=document.getElementById('connectionStatus');
+  try{
+    state=await api('/api/state');
+    render();
+    status.textContent='СЕРВЕР ПОДКЛЮЧЁН · PAPER';
+    status.style.color='var(--green)';
+  } catch(error){
+    status.textContent='НЕТ СВЯЗИ С СЕРВЕРОМ';
+    status.style.color='var(--red)';
     document.getElementById('holdings').textContent=error.message;
     document.getElementById('history').textContent='Нет связи с сервером';
+    document.getElementById('btc').textContent='Нет данных';
+    document.getElementById('eth').textContent='Нет данных';
     console.error(error);
   }
 }
