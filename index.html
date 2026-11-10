@@ -39,16 +39,25 @@ button{font:inherit;cursor:pointer}.top,.balance-row,.head,.holding,.trade{displ
 <div class="bottom">LINE TRADER AI · PAPER TRADING TERMINAL</div>
 <div class="modal-back" id="modal"><div class="modal"><h3 id="modalTitle">Новая сделка</h3><p>Демо-ордер. Реальные средства не используются.</p><select id="asset"><option value="BTC">Bitcoin · BTC/USDT</option><option value="ETH">Ethereum · ETH/USDT</option></select><input id="amount" type="number" min="0" step="any" placeholder="Сумма в USDT"><div class="modal-actions"><button class="cancel" onclick="closeTrade()">Отмена</button><button class="confirm" id="confirm" onclick="executeTrade()">Подтвердить</button></div></div></div>
 <script>
-const tg=window.Telegram&&window.Telegram.WebApp;
-if(tg){tg.ready();tg.expand()}
-const initData=tg&&tg.initData?tg.initData:"";
+function telegramApp(){return window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null;}
+function getInitData(){
+  const app=telegramApp();
+  return app&&typeof app.initData==='string'?app.initData:'';
+}
+function notifyTelegramReady(){
+  const app=telegramApp();
+  if(app){app.ready();app.expand();}
+}
+notifyTelegramReady();
+window.addEventListener('pageshow',notifyTelegramReady);
 const fmt=n=>Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 let state=null, mode='buy', busy=false;
 
-function apiHeaders(){return {'Content-Type':'application/json','X-Telegram-Init-Data':initData};}
+function apiHeaders(){return {'Content-Type':'application/json','X-Telegram-Init-Data':getInitData()};}
 async function api(path,options={}){
-  if(!API_BASE || API_BASE.includes('YOUR-RAILWAY-DOMAIN')) throw new Error('Нужно указать публичный домен Railway в index.html.');
-  if(!initData) throw new Error('Открой приложение через кнопку в Telegram, а не напрямую в Safari.');
+  if(!API_BASE || API_BASE.includes('YOUR-RAILWAY-DOMAIN')) throw new Error('Не указан адрес сервера Railway.');
+  const initData=getInitData();
+  if(!initData) throw new Error('Telegram не передал initData. Закрой мини-приложение крестиком и открой заново кнопкой «Открыть торговый терминал» в чате с ботом.');
   const response=await fetch(API_BASE+path,{...options,headers:{...apiHeaders(),...(options.headers||{})}});
   let body={};try{body=await response.json()}catch(e){}
   if(!response.ok) throw new Error(body.detail||('Ошибка сервера: HTTP '+response.status));
@@ -115,7 +124,7 @@ async function refresh(){
     document.getElementById('holdings').textContent=error.message;
     document.getElementById('history').textContent='Ошибка подключения: '+error.message;
     try{
-      const diagnostic=await fetch(API_BASE+'/api/diagnostics',{headers:{'X-Telegram-Init-Data':initData}});
+      const diagnostic=await fetch(API_BASE+'/api/diagnostics',{headers:{'X-Telegram-Init-Data':getInitData()}});
       const info=await diagnostic.json();
       const detail='Авторизация Telegram: '+info.reason+' | initData: '+(info.init_data_received?'получен':'не получен')+' | подпись: '+(info.signature_valid?'верна':'неверна')+' | аккаунт: '+(info.account_authorized?'совпадает':'не совпадает');
       document.getElementById('history').textContent=detail;
