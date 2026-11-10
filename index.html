@@ -27,8 +27,8 @@ button{font:inherit;cursor:pointer}.top,.balance-row,.head,.holding,.trade{displ
 </section>
 <div class="grid">
 <section class="card wide"><div class="head"><h2>Рынок</h2><span class="tag">КОТИРОВКИ OKX</span></div><div class="market">
-<div class="balance-row"><div class="coin"><div class="coin-icon">₿</div><div><div class="coin-name">Bitcoin</div><div class="coin-pair">BTC / USDT</div></div></div><div class="price" id="btc">$67,420.00</div></div>
-<div class="balance-row"><div class="coin"><div class="coin-icon" style="color:#a78bfa">◆</div><div><div class="coin-name">Ethereum</div><div class="coin-pair">ETH / USDT</div></div></div><div class="price" id="eth">$3,520.00</div></div>
+<div class="balance-row"><div class="coin"><div class="coin-icon">₿</div><div><div class="coin-name">Bitcoin</div><div class="coin-pair">BTC / USDT</div></div></div><div class="price" id="btc">Загрузка...</div></div>
+<div class="balance-row"><div class="coin"><div class="coin-icon" style="color:#a78bfa">◆</div><div><div class="coin-name">Ethereum</div><div class="coin-pair">ETH / USDT</div></div></div><div class="price" id="eth">Загрузка...</div></div>
 </div></section>
 <section class="card wide"><div class="head"><h2>Результат закрытых сделок</h2><span class="tag">РЕЗУЛЬТАТ СДЕЛОК</span></div><div class="chart"><canvas id="chart"></canvas></div><div class="labels"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>Сейчас</span></div></section>
 <section class="card"><div class="head"><h2>Позиции</h2><span class="tag" id="posCount">0</span></div><div id="holdings" class="empty">Пока нет открытых позиций</div></section>
@@ -116,6 +116,22 @@ async function executeTrade(){
   }catch(error){alert(error.message)}
   finally{busy=false;button.disabled=false;button.textContent=mode==='buy'?'Купить':'Продать'}
 }
+async function refreshMarket(){
+  try{
+    const response=await fetch(API_BASE+'/api/market',{cache:'no-store'});
+    if(!response.ok) throw new Error('HTTP '+response.status);
+    const payload=await response.json();
+    const market=payload.market||{};
+    setText('btc',market.BTC?'$'+fmt(market.BTC):'Нет данных');
+    setText('eth',market.ETH?'$'+fmt(market.ETH):'Нет данных');
+    const tag=document.querySelector('.market')?.closest('.card')?.querySelector('.tag');
+    if(tag) tag.textContent='OKX · '+(payload.updated_at?new Date(payload.updated_at).toLocaleTimeString('ru-RU'):'обновлено');
+  }catch(error){
+    setText('btc','Нет данных');
+    setText('eth','Нет данных');
+    console.error('Market quote update failed',error);
+  }
+}
 async function refresh(){
   try{state=await api('/api/state');const status=document.querySelector('.status');if(status){status.textContent='PAPER MODE';status.style.color='';status.style.borderColor='';}render()}
   catch(error){
@@ -132,6 +148,6 @@ async function refresh(){
     console.error(error);
   }
 }
-refresh();setInterval(refresh,15000);window.addEventListener('resize',()=>state&&drawChart(state));
+refreshMarket();setInterval(refreshMarket,5000);refresh();setInterval(refresh,15000);window.addEventListener('resize',()=>state&&drawChart(state));
 </script>
 </body></html>
