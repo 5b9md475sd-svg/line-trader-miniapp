@@ -27,8 +27,8 @@ button{font:inherit;cursor:pointer}.top,.balance-row,.head,.holding,.trade{displ
 </section>
 <div class="grid">
 <section class="card wide"><div class="head"><h2>Рынок</h2><span class="tag">КОТИРОВКИ OKX</span></div><div class="market">
-<div class="balance-row"><div class="coin"><div class="coin-icon">₿</div><div><div class="coin-name">Bitcoin</div><div class="coin-pair">BTC / USDT</div></div></div><div class="price" id="btc">Загрузка...</div></div>
-<div class="balance-row"><div class="coin"><div class="coin-icon" style="color:#a78bfa">◆</div><div><div class="coin-name">Ethereum</div><div class="coin-pair">ETH / USDT</div></div></div><div class="price" id="eth">Загрузка...</div></div>
+<div class="balance-row"><div class="coin"><div class="coin-icon">₿</div><div><div class="coin-name">Bitcoin</div><div class="coin-pair">BTC / USDT</div></div></div><div class="price" id="btc">$67,420.00</div></div>
+<div class="balance-row"><div class="coin"><div class="coin-icon" style="color:#a78bfa">◆</div><div><div class="coin-name">Ethereum</div><div class="coin-pair">ETH / USDT</div></div></div><div class="price" id="eth">$3,520.00</div></div>
 </div></section>
 <section class="card wide"><div class="head"><h2>Результат закрытых сделок</h2><span class="tag">РЕЗУЛЬТАТ СДЕЛОК</span></div><div class="chart"><canvas id="chart"></canvas></div><div class="labels"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>Сейчас</span></div></section>
 <section class="card"><div class="head"><h2>Позиции</h2><span class="tag" id="posCount">0</span></div><div id="holdings" class="empty">Пока нет открытых позиций</div></section>
@@ -37,39 +37,18 @@ button{font:inherit;cursor:pointer}.top,.balance-row,.head,.holding,.trade{displ
 <div class="section"><h2>Последние сделки</h2><span>История демо-счёта</span></div><section class="card" id="history"><div class="empty">Сделок пока нет</div></section>
 <div class="notice">⚠️ PAPER MODE. Баланс, позиции и история синхронизируются с сервером. Котировки поступают с OKX. Автоматическая AI-торговля пока не включена. Реальные деньги не используются.</div>
 <div class="bottom">LINE TRADER AI · PAPER TRADING TERMINAL</div>
-<div class="modal-back" id="modal"><div class="modal"><h3 id="modalTitle">Новая сделка</h3><p>Демо-ордер. Реальные средства не используются.</p><select id="asset"><option value="BTC">Bitcoin · BTC/USDT</option><option value="ETH">Ethereum · ETH/USDT</option></select><input id="amount" type="number" min="0" step="any" placeholder="Сумма в USDT"><div class="modal-actions"><button class="cancel" onclick="closeTrade()">Отмена</button><button class="confirm" id="confirm" onclick="executeTrade()">Подтвердить</button></div></div></div>
+<div class="modal-back" id="modal"><div class="modal"><h3 id="modalTitle">Новая сделка</h3><p>Демо-ордер. Реальные средства не используются.</p><select id="asset" onchange="if(mode==='sell')document.getElementById('amount').placeholder='Количество '+this.value"><option value="BTC">Bitcoin · BTC/USDT</option><option value="ETH">Ethereum · ETH/USDT</option></select><input id="amount" type="number" min="0" step="any" placeholder="Сумма в USDT"><div class="modal-actions"><button class="cancel" onclick="closeTrade()">Отмена</button><button class="confirm" id="confirm" onclick="executeTrade()">Подтвердить</button></div></div></div>
 <script>
-function telegramApp(){return window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null;}
-function getInitData(){
-  const app=telegramApp();
-  return app&&typeof app.initData==='string'?app.initData:'';
-}
-function telegramDebug(){
-  const app=telegramApp();
-  return {sdk:!!app,platform:app?.platform||'не определена',version:app?.version||'не определена',initDataLength:getInitData().length,unsafeUser:!!app?.initDataUnsafe?.user};
-}
-function notifyTelegramReady(){
-  const app=telegramApp();
-  if(app){try{app.ready();app.expand();}catch(e){console.warn('Telegram WebApp init:',e);}}
-}
-async function waitForTelegramInitData(){
-  for(let i=0;i<20;i++){
-    notifyTelegramReady();
-    if(getInitData()) return true;
-    await new Promise(resolve=>setTimeout(resolve,250));
-  }
-  return false;
-}
-notifyTelegramReady();
-window.addEventListener('pageshow',notifyTelegramReady);
+const tg=window.Telegram&&window.Telegram.WebApp;
+if(tg){tg.ready();tg.expand()}
+const initData=tg&&tg.initData?tg.initData:"";
 const fmt=n=>Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 let state=null, mode='buy', busy=false;
 
-function apiHeaders(){return {'Content-Type':'application/json','X-Telegram-Init-Data':getInitData()};}
+function apiHeaders(){return {'Content-Type':'application/json','X-Telegram-Init-Data':initData};}
 async function api(path,options={}){
-  if(!API_BASE || API_BASE.includes('YOUR-RAILWAY-DOMAIN')) throw new Error('Не указан адрес сервера Railway.');
-  const initData=getInitData();
-  if(!initData) throw new Error('Telegram не передал initData. Закрой мини-приложение крестиком и открой заново кнопкой «Открыть торговый терминал» в чате с ботом.');
+  if(!API_BASE || API_BASE.includes('YOUR-RAILWAY-DOMAIN')) throw new Error('Нужно указать публичный домен Railway в index.html.');
+  if(!initData) throw new Error('Открой приложение через кнопку в Telegram, а не напрямую в Safari.');
   const response=await fetch(API_BASE+path,{...options,headers:{...apiHeaders(),...(options.headers||{})}});
   let body={};try{body=await response.json()}catch(e){}
   if(!response.ok) throw new Error(body.detail||('Ошибка сервера: HTTP '+response.status));
@@ -115,7 +94,7 @@ function drawChart(data){
   const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'#20d69a55');g.addColorStop(1,'#20d69a00');x.fillStyle=g;x.fill();
   x.beginPath();pts.forEach((p,i)=>i?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y));x.strokeStyle='#20d69a';x.lineWidth=2;x.stroke();
 }
-function openTrade(side){mode=side;document.getElementById('modalTitle').textContent=side==='buy'?'Покупка актива':'Продажа актива';document.getElementById('confirm').textContent=side==='buy'?'Купить':'Продать';document.getElementById('amount').value='';document.getElementById('modal').style.display='flex'}
+function openTrade(side){mode=side;document.getElementById('modalTitle').textContent=side==='buy'?'Покупка актива':'Продажа актива';document.getElementById('confirm').textContent=side==='buy'?'Купить':'Продать';document.getElementById('amount').placeholder=side==='buy'?'Сумма в USDT':'Количество '+document.getElementById('asset').value;document.getElementById('amount').value='';document.getElementById('modal').style.display='flex'}
 function closeTrade(){document.getElementById('modal').style.display='none'}
 async function executeTrade(){
   if(busy)return;
@@ -128,39 +107,14 @@ async function executeTrade(){
   }catch(error){alert(error.message)}
   finally{busy=false;button.disabled=false;button.textContent=mode==='buy'?'Купить':'Продать'}
 }
-async function refreshMarket(){
-  try{
-    const response=await fetch(API_BASE+'/api/market',{cache:'no-store'});
-    if(!response.ok) throw new Error('HTTP '+response.status);
-    const payload=await response.json();
-    const market=payload.market||{};
-    setText('btc',market.BTC?'$'+fmt(market.BTC):'Нет данных');
-    setText('eth',market.ETH?'$'+fmt(market.ETH):'Нет данных');
-    const tag=document.querySelector('.market')?.closest('.card')?.querySelector('.tag');
-    if(tag) tag.textContent='OKX · '+(payload.updated_at?new Date(payload.updated_at).toLocaleTimeString('ru-RU'):'обновлено');
-  }catch(error){
-    setText('btc','Нет данных');
-    setText('eth','Нет данных');
-    console.error('Market quote update failed',error);
-  }
-}
 async function refresh(){
-  try{await waitForTelegramInitData();state=await api('/api/state');const status=document.querySelector('.status');if(status){status.textContent='PAPER MODE';status.style.color='';status.style.borderColor='';}render()}
+  try{state=await api('/api/state');render()}
   catch(error){
-    const status=document.querySelector('.status');
-    if(status){status.textContent='НЕТ СВЯЗИ С СЕРВЕРОМ';status.style.color='#ff8295';status.style.borderColor='#673344';}
     document.getElementById('holdings').textContent=error.message;
-    document.getElementById('history').textContent='Ошибка подключения: '+error.message;
-    try{
-      const diagnostic=await fetch(API_BASE+'/api/diagnostics',{headers:{'X-Telegram-Init-Data':getInitData()}});
-      const info=await diagnostic.json();
-      const d=telegramDebug();
-      const detail='Авторизация Telegram: '+info.reason+' | initData: '+(info.init_data_received?'получен':'не получен')+' | подпись: '+(info.signature_valid?'верна':'неверна')+' | аккаунт: '+(info.account_authorized?'совпадает':'не совпадает')+' | SDK: '+(d.sdk?'есть':'нет')+' | платформа: '+d.platform+' | версия: '+d.version+' | длина initData: '+d.initDataLength+' | user в initDataUnsafe: '+(d.unsafeUser?'есть':'нет');
-      document.getElementById('history').textContent=detail;
-    }catch(diagError){const d=telegramDebug();document.getElementById('history').textContent='Не удалось получить диагностику сервера. SDK: '+(d.sdk?'есть':'нет')+' | платформа: '+d.platform+' | версия: '+d.version+' | длина initData: '+d.initDataLength;console.error('API diagnostics failed',diagError)}
+    document.getElementById('history').textContent='Нет связи с сервером';
     console.error(error);
   }
 }
-refreshMarket();setInterval(refreshMarket,5000);refresh();setInterval(refresh,15000);window.addEventListener('resize',()=>state&&drawChart(state));
+refresh();setInterval(refresh,15000);window.addEventListener('resize',()=>state&&drawChart(state));
 </script>
 </body></html>
