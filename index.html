@@ -44,9 +44,21 @@ function getInitData(){
   const app=telegramApp();
   return app&&typeof app.initData==='string'?app.initData:'';
 }
+function telegramDebug(){
+  const app=telegramApp();
+  return {sdk:!!app,platform:app?.platform||'не определена',version:app?.version||'не определена',initDataLength:getInitData().length,unsafeUser:!!app?.initDataUnsafe?.user};
+}
 function notifyTelegramReady(){
   const app=telegramApp();
-  if(app){app.ready();app.expand();}
+  if(app){try{app.ready();app.expand();}catch(e){console.warn('Telegram WebApp init:',e);}}
+}
+async function waitForTelegramInitData(){
+  for(let i=0;i<20;i++){
+    notifyTelegramReady();
+    if(getInitData()) return true;
+    await new Promise(resolve=>setTimeout(resolve,250));
+  }
+  return false;
 }
 notifyTelegramReady();
 window.addEventListener('pageshow',notifyTelegramReady);
@@ -133,7 +145,7 @@ async function refreshMarket(){
   }
 }
 async function refresh(){
-  try{state=await api('/api/state');const status=document.querySelector('.status');if(status){status.textContent='PAPER MODE';status.style.color='';status.style.borderColor='';}render()}
+  try{await waitForTelegramInitData();state=await api('/api/state');const status=document.querySelector('.status');if(status){status.textContent='PAPER MODE';status.style.color='';status.style.borderColor='';}render()}
   catch(error){
     const status=document.querySelector('.status');
     if(status){status.textContent='НЕТ СВЯЗИ С СЕРВЕРОМ';status.style.color='#ff8295';status.style.borderColor='#673344';}
@@ -142,9 +154,10 @@ async function refresh(){
     try{
       const diagnostic=await fetch(API_BASE+'/api/diagnostics',{headers:{'X-Telegram-Init-Data':getInitData()}});
       const info=await diagnostic.json();
-      const detail='Авторизация Telegram: '+info.reason+' | initData: '+(info.init_data_received?'получен':'не получен')+' | подпись: '+(info.signature_valid?'верна':'неверна')+' | аккаунт: '+(info.account_authorized?'совпадает':'не совпадает');
+      const d=telegramDebug();
+      const detail='Авторизация Telegram: '+info.reason+' | initData: '+(info.init_data_received?'получен':'не получен')+' | подпись: '+(info.signature_valid?'верна':'неверна')+' | аккаунт: '+(info.account_authorized?'совпадает':'не совпадает')+' | SDK: '+(d.sdk?'есть':'нет')+' | платформа: '+d.platform+' | версия: '+d.version+' | длина initData: '+d.initDataLength+' | user в initDataUnsafe: '+(d.unsafeUser?'есть':'нет');
       document.getElementById('history').textContent=detail;
-    }catch(diagError){console.error('API diagnostics failed',diagError)}
+    }catch(diagError){const d=telegramDebug();document.getElementById('history').textContent='Не удалось получить диагностику сервера. SDK: '+(d.sdk?'есть':'нет')+' | платформа: '+d.platform+' | версия: '+d.version+' | длина initData: '+d.initDataLength;console.error('API diagnostics failed',diagError)}
     console.error(error);
   }
 }
